@@ -537,10 +537,23 @@
 
         !! add external source time function
         if (USE_EXTERNAL_SOURCE_FILE) then
-           stf = user_source_time_function(it, isource)
+           if ((1 == SIMULATION_TYPE) .and. (1 == time_stepping_scheme)) then
+             ! For forward simulation using Newmark format, the source wavelet function at t+deltat time instant should be used in correction phase because a^(n+1) should be used.
+             if (it < NSTEP) then
+                stf = user_source_time_function(it+1, isource)
+             else
+                stf = 0.d0
+             end if
+           else
+              stf = user_source_time_function(it, isource)
+           end if
         else
            ! determines source time function value
-           stf = get_stf_viscoelastic(time_source_dble,isource)
+           if ((1 == SIMULATION_TYPE) .and. (1 == time_stepping_scheme)) then
+              stf = get_stf_viscoelastic(time_source_dble+DT,isource)
+           else
+              stf = get_stf_viscoelastic(time_source_dble,isource)
+           end if
         endif
 
         ! stores precomputed source time function factor
